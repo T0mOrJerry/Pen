@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                {% for item in adv %}
+                    <div class="sticky-top">
+                        <div class="sticky-left">
+                            <img src="{{ item }}" class="rounded float-start" width="300" height="400" alt="advert">
+                            <p></p>
+                        </div>
+                    </div>
+                    <p></p>
+                {% endfor %}
+            </div>
+            <div class="col-6">
+                {% for item in fe %}
+                    <div style="text-align: center;">
+                        <figure class="figure">
+{#                            sjhgdjsg#}
+                            {% if item['act'] %}
+                            <div class="container-fluid">
+                                <a style="color: #0d2838">
+                                    <img src="static/User/{{ item['av'] }}" alt="" width="30" height="30" class="d-inline-block align-text-top lil-ava">
+                                    {{ item['nick'] }}
+                                </a>
+                            </div>
+                            {% else%}
+                            <div class="container-fluid">
+                                <a style="color: #0d2838" href="/stranger_profile/{{ item['us_id'] }}">
+                                    <img src="static/User/{{ item['av'] }}" alt="" width="30" height="30" class="d-inline-block align-text-top lil-ava">
+                                    {{ item['nick'] }}
+                                </a>
+                            </div>
+                            {% endif %}
+{#                            fjygihkgu#}
+                            <img src="static/User/{{ item['way'] }}"
+                                 class="figure-img img-fluid rounded position-relative" width="400" height="300"
+                                 alt="kartinka">
+                            <figcaption class="figure-caption">{{ item['about'] }}</figcaption>
+                            <form action="" method="post">
+                                <button type="submit" name="action" value="{{ item['id'] }}">
+                                    {{ item['likes'] }}👍
+                                </button>
+                            </form>
+                        </figure>
+                    </div>
+                    <p>
+                        <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                            Comments...
+                        </button>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="your comment"
+                               aria-label="your comment" aria-describedby="button-addon2">
+                        <button class="btn btn-outline-secondary" type="button" id="button-addon2">Send</button>
+                    </div>
+                    </p>
+                    <div class="collapse" id="collapseExample">
+                        <div class="card card-body">
+                            <div id="list-example" class="list-group">
+                                {% for i in item['comments'] %}
+                                    <a class="list-group-item list-group-item-action"
+                                       href="#{{ i['user_nick'] }}">{{ i['user_nick'] }}</a>
+                                {% endfor %}
+                            </div>
+                            <div data-bs-spy="scroll" data-bs-target="#list-example" data-bs-offset="0"
+                                 class="scrollspy-example" tabindex="0">
+                                {% for i in item['comments'] %}
+                                    <h4 id="{{ i['user_nick'] }}">{{ i['comment'] }} {{ i['time'] }}</h4>
+                                    <p></p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="col">
+                more adverts
+            </div>
+        </div>
+    </div>
+{% endblock %}
