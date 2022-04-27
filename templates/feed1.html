@@ -20,14 +20,16 @@
                             {% if item['act'] %}
                                 <div class="container-fluid">
                                     <a style="color: #0d2838">
-                                        <img src="static/User/{{ item['av'] }}" alt="" width="30" height="30" class="d-inline-block align-text-top lil-ava">
+                                        <img src="static/User/{{ item['av'] }}" alt="" width="30" height="30"
+                                             class="d-inline-block align-text-top lil-ava">
                                         {{ item['nick'] }}
                                     </a>
                                 </div>
-                            {% else%}
+                            {% else %}
                                 <div class="container-fluid">
                                     <a style="color: #0d2838" href="/stranger_profile/{{ item['us_id'] }}">
-                                        <img src="static/User/{{ item['av'] }}" alt="" width="30" height="30" class="d-inline-block align-text-top lil-ava">
+                                        <img src="static/User/{{ item['av'] }}" alt="" width="30" height="30"
+                                             class="d-inline-block align-text-top lil-ava">
                                         {{ item['nick'] }}
                                     </a>
                                 </div>
@@ -78,12 +80,22 @@
                 {% endfor %}
             </div>
             <div class="col">
-                <p>Oсортировать</p>
-                <p></p>
-                <form action="" method="post">
-                    {{ sort.example }}
-                    <button class="btn btn-primary" type="submit" name="sort" value="sort">Sort</button>
-                </form>
+                <div class="sticky-top">
+                    <p>Oсортировать</p>
+                    <p></p>
+                    <form action="" method="post">
+                        {{ sort.example }}
+                        <button class="btn btn-primary" type="submit" name="sort" value="sort">Sort</button>
+                    </form>
+                    <form action="" method="post">
+                        {{ pop.example }}
+                        <button class="btn btn-primary" type="submit" name="sort" value="pop">Sort</button>
+                    </form>
+                    <form action="" method="post">
+                        {{ reg.example }}
+                        <button class="btn btn-primary" type="submit" name="sort" value="reg">Sort</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

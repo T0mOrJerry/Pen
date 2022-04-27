@@ -1,7 +1,6 @@
 import csv
 import datetime
 
-from flask import Flask, render_template, redirect
 ####################
 import json
 import os
@@ -12,7 +11,6 @@ from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import SubmitField, StringField, SelectMultipleField, widgets
 ####################
 from wtforms.validators import DataRequired
-from waitress import serve
 
 from data import db_session
 from data import file_loader
@@ -45,14 +43,24 @@ class Comms(FlaskForm):
     com = StringField('Type your comment', validators=[DataRequired()])
     submit = SubmitField('Send')
 
+
 ##########################################################################
 class MultiCheckboxField(SelectMultipleField):
     widget = widgets.ListWidget(prefix_label=False)
     option_widget = widgets.CheckboxInput()
 
+
 ##########################################################################
 class Sort(FlaskForm):
     example = MultiCheckboxField('Label', choices=categories)
+
+
+class Pop(FlaskForm):
+    example = MultiCheckboxField('Label', choices=[('pop', 'По популярности')])
+
+
+class Reg(FlaskForm):
+    example = MultiCheckboxField('Label', choices=[('reg', 'По регионам')])
 
 
 def update_lvl():
@@ -71,6 +79,7 @@ def get_avatar():
     for ava in db_sess.query(Avatar).filter(Avatar.user_id == session):
         avatar_filename = ava.filename
     return avatar_filename
+
 
 def another_avatar(id):
     avatar_filename = 'noname.jpg'
@@ -92,7 +101,6 @@ class UploadMemeForm(FlaskForm):
     about = StringField('Подпись к мему', validators=[DataRequired()])
     category = SelectMultipleField(u'Категория мема', choices=categories)
     submit = SubmitField('Запостить')
-
 
 
 def main():
@@ -158,15 +166,32 @@ def login():
     return render_template('login.html', title='Вход в систему', form=form)
 
 
+def load_memes(ref):
+    db_sess = db_session.create_session()
+    fe = []
+    for mem in ref:
+        with open('static/comments.csv', 'r', encoding='utf8') as file:
+            inf = csv.DictReader(file, delimiter=';')
+            com = [i for i in inf if i['meme_id'] == f'{mem.id}']
+        user = db_sess.query(User).filter(User.id == mem.user_id).first()
+        new = {'way': mem.way, 'about': mem.about, 'id': mem.id, 'likes': mem.likes, 'comments': com,
+               'av': another_avatar(user.id), 'nick': user.nickname, 'us_id': int(user.id),
+               'act': session == user.id}
+        fe.append(new)
+    return fe
+
+
 @app.route('/feed', methods=['GET', 'POST'])
 def feed():
     fe = []
     form = Comms()
     sor = Sort()
+    pop = Pop()
+    reg = Reg()
     mem = None
-    ##########################################################################
+    popul = False
+    region = False
     db_sess = db_session.create_session()
-    ##########################################################################
     global curent_user, session, categories, curent_categories
     cats = [j for i, j in categories]
     if request.method == 'POST':
@@ -192,31 +217,27 @@ def feed():
                 writer.writeheader()
                 for d in com:
                     writer.writerow(d)
-        elif request.form.get('sort'):
+        elif request.form.get('sort') == 'sort':
             curent_categories = sor.example.data
-
-
+        elif request.form.get('sort') == 'pop':
+            if pop.example.data:
+                popul = True
+        elif request.form.get('sort') == 'reg':
+            if reg.example.data:
+                region = True
     if not curent_categories:
-        for mem in db_sess.query(Meme).all():
-            with open('static/comments.csv', 'r', encoding='utf8') as file:
-                inf = csv.DictReader(file, delimiter=';')
-                com = [i for i in inf if i['meme_id'] == f'{mem.id}']
-            user = db_sess.query(User).filter(User.id == mem.user_id).first()
-            new = {'way': mem.way, 'about': mem.about, 'id': mem.id, 'likes': mem.likes, 'comments': com,
-               'av': another_avatar(user.id), 'nick': user.nickname, 'us_id': int(user.id), 'act': session == user.id}
-            fe.append(new)
+        fe = load_memes(db_sess.query(Meme).all())
     else:
-        for mem in db_sess.query(Meme).filter(Meme.category.in_(curent_categories)):
-            with open('static/comments.csv', 'r', encoding='utf8') as file:
-                inf = csv.DictReader(file, delimiter=';')
-                com = [i for i in inf if i['meme_id'] == f'{mem.id}']
-            user = db_sess.query(User).filter(User.id == mem.user_id).first()
-            new = {'way': mem.way, 'about': mem.about, 'id': mem.id, 'likes': mem.likes, 'comments': com,
-               'av': another_avatar(user.id), 'nick': user.nickname, 'us_id': int(user.id), 'act': session == user.id}
-            fe.append(new)
+        fe = load_memes(db_sess.query(Meme).filter(Meme.category.in_(curent_categories)))
+    if region:
+        ids = [i.id for i in db_sess.query(User).filter(User.region == curent_user.region)]
+        fe = [i for i in fe if i['us_id'] in ids]
+
+    if popul:
+        fe = list(sorted(fe, key=lambda x: x['likes'], reverse=True))
     adv = ['/static/adv1.png', '/static/adv2.png']
-    return render_template('feed1.html', title='Лента новостей', fe=fe, adv=adv, avatar=get_avatar(), se=session, form=form,
-                           cat=cats, sort=sor)
+    return render_template('feed1.html', title='Лента новостей', fe=fe, adv=adv, avatar=get_avatar(), se=session,
+                           form=form, cat=cats, sort=sor, pop=pop, reg=reg)
 
 
 @app.route('/profile', methods=['GET', 'POST'])
@@ -305,10 +326,11 @@ def best():
     for mem in db_sess.query(Meme).filter(Meme.id.in_(k)):
         auser = db_sess.query(User).filter(User.id == mem.user_id).first()
         new = {'way': mem.way, 'about': mem.about, 'id': mem.id,
-               'av': another_avatar(auser.id), 'nick': auser.nickname, 'us_id': int(auser.id), 'act': session == mem.user_id}
+               'av': another_avatar(auser.id), 'nick': auser.nickname, 'us_id': int(auser.id),
+               'act': session == mem.user_id}
         fe.append(new)
-    print(fe)
     return render_template('best.html', title='Лента новостей', fe=fe, avatar=get_avatar(), se=session)
 
+
 if __name__ == '__main__':
-    serve(app, host='0.0.0.0', port=5000)
+    main()
