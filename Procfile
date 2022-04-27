@@ -1,1 +1,1 @@
-web: python main_together.py
+web: gunicorn main_together.py
