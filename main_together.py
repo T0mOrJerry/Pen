@@ -12,6 +12,7 @@ from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import SubmitField, StringField, SelectMultipleField, widgets
 ####################
 from wtforms.validators import DataRequired
+from waitress import serve
 
 from data import db_session
 from data import file_loader
@@ -310,4 +311,4 @@ def best():
     return render_template('best.html', title='Лента новостей', fe=fe, avatar=get_avatar(), se=session)
 
 if __name__ == '__main__':
-    main()
+    serve(app, host='0.0.0.0', port=5000)
