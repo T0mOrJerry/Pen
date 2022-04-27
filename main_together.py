@@ -136,7 +136,6 @@ def reqister():
 
 
 @app.route('/', methods=['GET', 'POST'])
-@app.route('/1', methods=['GET', 'POST'])
 def login():
     global session, lvl
     form = RegisterForm()
